@@ -35,6 +35,13 @@ const typeDefs = `#graphql
     booksFind(title:String,author:String): [Book]
     authors : [Author]
   }
+  type Mutation{
+    insertAuthor(
+      name : String
+      career : Int
+      age : Int
+    ):Author
+  }
 `;
 
 // Resolvers define how to fetch the types defined in your schema.
@@ -55,6 +62,13 @@ const resolvers = {
       return await bookModel.find(args);
     },
     authors: async () => await authorModel.find(),
+  },
+  Mutation: {
+    insertAuthor: async (parent, args, contextValue, info) => {
+      const newAuthor = new authorModel(args);
+      await newAuthor.save();
+      return newAuthor;
+    },
   },
 };
 
