@@ -8,7 +8,6 @@ const authorSchema = new mongoose.Schema(
     },
     career: Number,
     age: Number,
-    _id: String,
   },
   {
     timestamps: true,

@@ -4,7 +4,7 @@
 
 ### 2022-12-13 작업
 
-1.moongoose find 및 graphql search 연계 작업
-2.author 스키마 추가
-3.author 검색 추가
-4.author insert 작업 진행 중
+1.moongoose find 및 graphql search 연계 작업</br>
+2.author 스키마 추가</br>
+3.author 검색 추가</br>
+4.author insert 작업 완료 </br>
