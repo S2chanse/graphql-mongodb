@@ -4,6 +4,7 @@ import { startStandaloneServer } from '@apollo/server/standalone';
 import db from './config/mongoDB.js';
 
 import bookModel from './config/models/book.js';
+import authorModel from './config/models/author.js';
 
 Dotenv.config();
 // A schema is a collection of type definitions (hence "typeDefs")
@@ -21,8 +22,8 @@ const typeDefs = `#graphql
 }
   type Author{
     name : String
-    career : Number
-    age : Number
+    career : Int
+    age : Int
   }
 
 
@@ -32,7 +33,7 @@ const typeDefs = `#graphql
   type Query {
     books:[Book]
     booksFind(title:String,author:String): [Book]
-    author : [Author]
+    authors : [Author]
   }
 `;
 
@@ -43,16 +44,17 @@ const typeDefs = `#graphql
  */
 const resolvers = {
   Query: {
-    books: async () => await bookModel.find(),
+    books: async () => {
+      const booksList = await bookModel.find().populate('author');
+      return booksList;
+    },
     booksFind: async (parent, args, contextValue, info) => {
       Object.keys(args).forEach((key) => {
         args[key] = { $regex: args[key] };
       });
-
-      console.log(args);
       return await bookModel.find(args);
     },
-    Muattion: {},
+    authors: async () => await authorModel.find(),
   },
 };
 

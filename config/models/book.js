@@ -6,7 +6,10 @@ const bookSchema = new mongoose.Schema(
       type: String,
       require: true,
     },
-    author: String,
+    author: {
+      type: mongoose.Schema.Types.String,
+      ref: 'Author',
+    },
     _id: String,
   },
   {
