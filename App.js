@@ -1,9 +1,9 @@
-import Dotenv from "dotenv";
+import Dotenv from 'dotenv';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
-import db  from './config/mongoDB.js';
+import db from './config/mongoDB.js';
 
-import bookModel from "./config/models/book.js";
+import bookModel from './config/models/book.js';
 
 Dotenv.config();
 // A schema is a collection of type definitions (hence "typeDefs")
@@ -16,16 +16,23 @@ const typeDefs = `#graphql
   # This "Book" type defines the queryable fields for every book in our data source.
   type Book {
   title: String
-  author: String
+  author: [Author]
   _id : String
 }
+  type Author{
+    name : String
+    career : Number
+    age : Number
+  }
 
 
   # The "Query" type is special: it lists all of the available queries that
   # clients can execute, along with the return type for each. In this
   # case, the "books" query returns an array of zero or more Books (defined above).
   type Query {
-    books: [Book]
+    books:[Book]
+    booksFind(title:String,author:String): [Book]
+    author : [Author]
   }
 `;
 
@@ -35,27 +42,33 @@ const typeDefs = `#graphql
  * @type {import(ApolloServer)}
  */
 const resolvers = {
-    Query: {
-      books: async () => await bookModel.find()
-    }
-  };
+  Query: {
+    books: async () => await bookModel.find(),
+    booksFind: async (parent, args, contextValue, info) => {
+      Object.keys(args).forEach((key) => {
+        args[key] = { $regex: args[key] };
+      });
 
+      console.log(args);
+      return await bookModel.find(args);
+    },
+    Muattion: {},
+  },
+};
 
-  // The ApolloServer constructor requires two parameters: your schema
+// The ApolloServer constructor requires two parameters: your schema
 // definition and your set of resolvers.
 const server = new ApolloServer({
-    typeDefs,
-    resolvers,
-  });
-  
+  typeDefs,
+  resolvers,
+});
 
+// Passing an ApolloServer instance to the `startStandaloneServer` function:
+//  1. creates an Express app
+//  2. installs your ApolloServer instance as middleware
+//  3. prepares your app to handle incoming requests
+const { url } = await startStandaloneServer(server, {
+  listen: { port: 5000 },
+});
 
-  // Passing an ApolloServer instance to the `startStandaloneServer` function:
-  //  1. creates an Express app
-  //  2. installs your ApolloServer instance as middleware
-  //  3. prepares your app to handle incoming requests
-  const { url } = await startStandaloneServer(server, {
-    listen: { port: 5000 },
-  });
-  
-  console.log(`🚀  Server ready at: ${url}`);
+console.log(`🚀  Server ready at: ${url}`);
