@@ -3,9 +3,8 @@ import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 import db from './config/mongoDB.js';
 
-// import bookModel from './config/models/book.js';
-// import authorModel from './config/models/author.js';
-import schema from './config/schema.js';
+import bookModel from './config/models/book.js';
+import authorModel from './config/models/author.js';
 
 Dotenv.config();
 // A schema is a collection of type definitions (hence "typeDefs")
@@ -18,13 +17,14 @@ const typeDefs = `#graphql
   # This "Book" type defines the queryable fields for every book in our data source.
   type Book {
   title: String
-  author: [Author]
+  author: Author
   _id : String
 }
   type Author{
     name : String
     career : Int
     age : Int
+    books : [Book]
   }
 
   type Result{
@@ -62,41 +62,45 @@ const typeDefs = `#graphql
 const resolvers = {
   Query: {
     books: async () => {
-      const booksList = await schema.bookModel.find().populate('author');
+      const booksList = await bookModel.find().populate('author');
+      console.log(booksList);
       return booksList;
     },
     booksFind: async (parent, args, contextValue, info) => {
       Object.keys(args).forEach((key) => {
         args[key] = { $regex: args[key] };
       });
-      return await schema.bookModel.find(args);
+      return await bookModel.find(args);
     },
-    authors: async () => await schema.authorModel.find(),
+    authors: async () => await authorModel.find(),
   },
-  
+
   Mutation: {
     insertAuthor: async (parent, args, contextValue, info) => {
       const newAuthor = new authorModel(args);
       await newAuthor.save();
       return newAuthor;
     },
-    insertBook: (parent, args, contextValue, info) =>{
-      authorModel.findOne({name : args.author}).exec().then((res)=>{
-          if(res){
-          const body = {
-            title : args.title,author : res._id
+    insertBook: (parent, args, contextValue, info) => {
+      authorModel
+        .findOne({ name: args.author })
+        .exec()
+        .then((res) => {
+          if (res) {
+            const body = {
+              title: args.title,
+              author: res._id,
+            };
+            console.log(body);
+            const newBook = new bookModel(body);
+            newBook.save().then((res) => {
+              console.log(res);
+            });
+          } else {
+            console.log('Is Null');
           }
-          console.log(body);
-          const newBook = new bookModel(body);
-          newBook.save().then((res)=>{
-            console.log(res);
-          })
-        }else{
-          console.log("Is Null")
-        }
         });
-
-    } 
+    },
   },
 };
 
